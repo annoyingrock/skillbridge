@@ -16,7 +16,7 @@ body {
 
 .card {
     background-color: #111827;
-    padding: 20px;
+    padding: 22px;
     border-radius: 14px;
     border: 1px solid #1f2937;
     margin-bottom: 20px;
@@ -40,7 +40,7 @@ body {
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ---------------- LOGIN PAGE ----------------
+# ---------------- LOGIN ----------------
 if not st.session_state.logged_in:
 
     st.markdown("<br><br><br>", unsafe_allow_html=True)
@@ -84,20 +84,24 @@ else:
     if selected_role != "All Internships":
         data = data[data["title"] == selected_role]
 
-    # ---------- RESUME INPUT ----------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 📄 Resume Input")
-    resume_text = st.text_area(
-        "Paste your resume content here",
-        height=220,
-        placeholder="Education, skills, experience..."
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+    # ===== MAIN LAYOUT (BIG LEFT + SMALL RIGHT) =====
+    left, right = st.columns([3,1])
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    run = st.button("🚀 Find Matches", use_container_width=True)
-    st.markdown('<p class="small">Matching is based on skill similarity.</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with left:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("### 📄 Resume Input")
+        resume_text = st.text_area(
+            "Paste your resume content here",
+            height=300,
+            placeholder="Education, skills, experience..."
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with right:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        run = st.button("🚀 Find Matches", use_container_width=True)
+        st.markdown('<p class="small">Based on skill similarity</p>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     if run:
         word_count = len(resume_text.split())
