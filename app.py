@@ -64,7 +64,7 @@ else:
             descriptions = data["description"].tolist()
             descriptions.append(resume_text)
 
-            vectorizer = TfidfVectorizer()
+            vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1,2))
             vectors = vectorizer.fit_transform(descriptions)
 
             similarity = cosine_similarity(vectors[-1], vectors[:-1])
@@ -128,3 +128,4 @@ else:
 
     st.markdown("---")
     st.markdown("SkillBridge © 2026")
+
