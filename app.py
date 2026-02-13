@@ -26,7 +26,19 @@ except:
     st.error("Could not load internship data.")
     st.stop()
 
-st.sidebar.header("User Tools")
+# -------- SIDEBAR FILTER --------
+st.sidebar.title("Filters")
+
+selected_role = st.sidebar.selectbox(
+    "Filter by Role",
+    ["All"] + sorted(data["title"].unique())
+)
+
+if selected_role != "All":
+    data = data[data["title"] == selected_role]
+
+# -------- SIDEBAR TOOLS --------
+st.sidebar.subheader("User Tools")
 
 if st.sidebar.button("Clear Resume"):
     st.session_state["resume"] = ""
@@ -92,5 +104,4 @@ if "results" in st.session_state:
     )
 
 st.divider()
-
 st.markdown("SkillBridge © 2026")
