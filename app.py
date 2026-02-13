@@ -37,19 +37,22 @@ if st.button("Find Matches"):
         # Convert to percentage
         data["Match Score (%)"] = similarity[0] * 100
 
-        # Sort and reset index (THIS FIXES NUMBERING)
+        # Sort and reset index
         results = (
             data.sort_values(by="Match Score (%)", ascending=False)
             .reset_index(drop=True)
         )
 
-        # Start numbering from 1 instead of 0
+        # Start numbering from 1
         results.index = results.index + 1
+
+        # Add % symbol ONLY for display
+        results["Match Score (%)"] = results["Match Score (%)"].map(
+            lambda x: f"{x:.2f}%"
+        )
 
         st.subheader("Top Matches")
 
         st.dataframe(
-            results[["title", "Match Score (%)"]]
-            .head(5)
-            .style.format({"Match Score (%)": "{:.2f}"})
+            results[["title", "Match Score (%)"]].head(5)
         )
