@@ -9,41 +9,6 @@ st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-
-body {
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-}
-
-.login-card {
-    background-color: #111827;
-    padding: 40px;
-    border-radius: 12px;
-    max-width: 420px;
-    margin: auto;
-    box-shadow: 0px 10px 30px rgba(0,0,0,0.4);
-}
-
-.login-title {
-    text-align: center;
-    font-size: 36px;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-
-.login-subtitle {
-    text-align: center;
-    color: #9ca3af;
-    margin-bottom: 30px;
-}
-
-.login-btn button {
-    width: 100%;
-    background: linear-gradient(90deg, #2563eb, #3b82f6);
-    color: white;
-    border-radius: 8px;
-    font-size: 16px;
-    padding: 10px;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -53,37 +18,42 @@ if "logged_in" not in st.session_state:
 # ---------------- LOGIN PAGE ----------------
 if not st.session_state.logged_in:
 
-    st.markdown("""
-    <div class="login-card">
-        <div class="login-title">SkillBridge</div>
-        <div class="login-subtitle">Sign in to continue</div>
-    """, unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1,2,1])
 
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    with col2:
+        st.markdown("## SkillBridge")
+        st.caption("Sign in to continue")
+        st.markdown("---")
 
-    st.markdown('<div class="login-btn">', unsafe_allow_html=True)
-    if st.button("Login"):
-        if username == "admin" and password == "1234":
-            st.session_state.logged_in = True
-            st.rerun()
-        else:
-            st.error("Invalid credentials")
-    st.markdown('</div></div>', unsafe_allow_html=True)
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+
+        if st.button("Login", use_container_width=True):
+            if username == "admin" and password == "1234":
+                st.session_state.logged_in = True
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
 
 # ---------------- MAIN APP ----------------
 else:
 
     st.title("SkillBridge")
-    st.markdown("Internship Matching Platform")
+    st.caption("Internship Matching Platform")
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
 
-    data = pd.read_csv("internships.csv")
+    try:
+        data = pd.read_csv("internships.csv")
+    except:
+        st.error("Unable to load internship data.")
+        st.stop()
 
     st.sidebar.title("Explore Opportunities")
+
     selected_role = st.sidebar.selectbox(
         "Choose Internship Role",
         ["All Internships"] + sorted(data["title"].unique())
@@ -139,6 +109,8 @@ else:
                 path = ["Backend Developer", "Senior Backend Engineer", "Software Architect"]
             elif "data" in role:
                 path = ["Data Analyst", "Data Scientist", "AI Engineer"]
+            elif "cloud" in role or "devops" in role:
+                path = ["Cloud Engineer", "DevOps Engineer", "Cloud Architect"]
             else:
                 path = ["Technical Intern", "Technology Specialist", "Technology Lead"]
 
@@ -157,4 +129,4 @@ else:
         )
 
     st.markdown("---")
-    st.markdown("SkillBridge © 2026")
+    st.caption("SkillBridge © 2026")
