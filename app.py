@@ -9,7 +9,6 @@ hide_streamlit_style = """
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-header {visibility: hidden;}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -105,3 +104,4 @@ if "results" in st.session_state:
 
 st.divider()
 st.markdown("SkillBridge © 2026")
+
