@@ -66,8 +66,12 @@ if not st.session_state.logged_in:
 
 # ---------------- MAIN APP ----------------
 else:
+
+    # 🔴 HEADER INSIDE CARD (this removes blue boxes)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("## SkillBridge")
     st.caption("Smart Internship Matching Platform")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
@@ -84,7 +88,7 @@ else:
     if selected_role != "All Internships":
         data = data[data["title"] == selected_role]
 
-    # ===== MAIN LAYOUT (BIG LEFT + SMALL RIGHT) =====
+    # ===== MAIN LAYOUT =====
     left, right = st.columns([3,1])
 
     with left:
@@ -104,9 +108,7 @@ else:
         st.markdown('</div>', unsafe_allow_html=True)
 
     if run:
-        word_count = len(resume_text.split())
-
-        if word_count < 5:
+        if len(resume_text.split()) < 5:
             st.warning("Please provide more details about your profile.")
             st.stop()
 
@@ -138,7 +140,6 @@ else:
 
         with col1:
             st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown("### 📊 Top Matching Internships")
             display = results.head(5).copy()
             display["Match Score"] = display["Match Score"].map(lambda x: f"{x:.2f}%")
             st.dataframe(display[["title", "Match Score"]], use_container_width=True)
@@ -146,33 +147,21 @@ else:
 
         with col2:
             st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown("### 🧠 Career Path Suggestion")
+            st.markdown("### 🧠 Career Path")
 
             role = top["title"].lower()
             if any(k in role for k in ["business", "operations", "reporting"]):
                 path = ["Business Intern", "Business Analyst", "Operations Manager"]
             elif "data" in role:
                 path = ["Data Analyst Intern", "Data Analyst", "Data Scientist"]
-            elif "backend" in role or "python" in role:
+            elif "backend" in role:
                 path = ["Backend Intern", "Backend Engineer", "Software Architect"]
-            elif "frontend" in role or "ui" in role:
-                path = ["Frontend Intern", "Frontend Developer", "UI Lead"]
-            elif "cloud" in role or "devops" in role:
-                path = ["Cloud Intern", "Cloud Engineer", "Cloud Architect"]
             else:
                 path = ["General Intern", "Specialist", "Team Lead"]
 
-            st.write("Entry Level:", path[0])
-            st.write("Mid Level:", path[1])
-            st.write("Advanced Level:", path[2])
+            st.write("Entry:", path[0])
+            st.write("Mid:", path[1])
+            st.write("Advanced:", path[2])
             st.markdown('</div>', unsafe_allow_html=True)
 
-        st.sidebar.download_button(
-            "Download Results",
-            display.to_csv(index=False),
-            "skillbridge_results.csv",
-            "text/csv"
-        )
-
-    st.markdown("---")
     st.caption("SkillBridge © 2026")
