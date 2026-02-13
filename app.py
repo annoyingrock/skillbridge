@@ -85,10 +85,9 @@ if st.button("Find Matches"):
         st.subheader("Resume Overview")
         st.write(f"Total Words in Resume: {len(resume_text.split())}")
 
-st.divider()
-
 # ---------- FOOTER ----------
 st.markdown("""
 ---
 SkillBridge © 2026
 """)
+
