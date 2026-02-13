@@ -3,12 +3,38 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-st.set_page_config(page_title="SkillBridge", page_icon="📄", layout="centered")
+st.set_page_config(page_title="SkillBridge", page_icon="📄", layout="wide")
 
 st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+
+body {
+    background-color: #0f172a;
+    color: #e5e7eb;
+}
+
+.card {
+    background-color: #111827;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid #1f2937;
+    margin-bottom: 20px;
+}
+
+.highlight {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    padding: 20px;
+    border-radius: 14px;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.small-text {
+    color: #9ca3af;
+    font-size: 14px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -17,10 +43,12 @@ if "logged_in" not in st.session_state:
 
 # ---------------- LOGIN ----------------
 if not st.session_state.logged_in:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1,2,1])
 
-    with col2:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1,2,1])
+
+    with c2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("## SkillBridge")
         st.caption("Sign in to continue")
         st.markdown("---")
@@ -34,11 +62,13 @@ if not st.session_state.logged_in:
                 st.rerun()
             else:
                 st.error("Invalid credentials")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------- MAIN APP ----------------
 else:
-    st.title("SkillBridge")
-    st.caption("Internship Matching Platform")
+
+    st.markdown("## SkillBridge")
+    st.caption("Smart Internship Matching Platform")
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
@@ -46,23 +76,41 @@ else:
 
     data = pd.read_csv("internships.csv")
 
-    st.sidebar.title("Explore Opportunities")
+    st.sidebar.title("Explore")
     selected_role = st.sidebar.selectbox(
-        "Choose Internship Role",
+        "Filter by Role",
         ["All Internships"] + sorted(data["title"].unique())
     )
 
     if selected_role != "All Internships":
         data = data[data["title"] == selected_role]
 
-    resume_text = st.text_area("Paste your resume content here", height=200)
+    left, right = st.columns([2,1])
 
-    if st.button("Find Matches"):
+    # -------- LEFT: RESUME INPUT --------
+    with left:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("### 📄 Resume Input")
+        resume_text = st.text_area(
+            "Paste your resume content here",
+            height=220,
+            placeholder="Enter education, skills, experience..."
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        word_count = len(resume_text.split())
+    # -------- RIGHT: ACTION --------
+    with right:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("### 🚀 Action")
+        run = st.button("Find Matches", use_container_width=True)
+        st.markdown('<p class="small-text">Results are based on skill similarity.</p>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        if word_count < 5:
-            st.warning("Please provide more information about your skills or background.")
+    if run:
+
+        words = len(resume_text.split())
+        if words < 5:
+            st.warning("Please provide more details about your profile.")
             st.stop()
 
         descriptions = data["description"].tolist()
@@ -74,57 +122,59 @@ else:
         similarity = cosine_similarity(vectors[-1], vectors[:-1])
         data["Match Score"] = similarity[0] * 100
 
-        max_score = data["Match Score"].max()
-
-        if max_score < 5:
-            st.error("No relevant internship matches found for this profile.")
+        if data["Match Score"].max() < 5:
+            st.error("No relevant internship matches found.")
             st.info("Try adding education, skills, or experience related to internships.")
             st.stop()
 
         results = data.sort_values(by="Match Score", ascending=False).reset_index(drop=True)
-        results.index = results.index + 1
+        top = results.iloc[0]
 
-        top_match = results.iloc[0]
+        # -------- BEST MATCH --------
+        st.markdown('<div class="highlight">', unsafe_allow_html=True)
+        st.markdown(f"### 🎯 Best Match")
+        st.markdown(f"**{top['title']}**")
+        st.markdown(f"Match Score: **{top['Match Score']:.2f}%**")
+        st.progress(int(top["Match Score"]))
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        st.success(f"Best Match: {top_match['title']} ({top_match['Match Score']:.2f}%)")
-        st.progress(int(top_match["Match Score"]))
+        # -------- RESULTS + CAREER PATH --------
+        colA, colB = st.columns(2)
 
-        display = results.copy()
-        display["Match Score"] = display["Match Score"].map(lambda x: f"{x:.2f}%")
+        with colA:
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            st.markdown("### 📊 Top Matches")
+            display = results.head(5).copy()
+            display["Match Score"] = display["Match Score"].map(lambda x: f"{x:.2f}%")
+            st.dataframe(display[["title", "Match Score"]], use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        st.subheader("Top Matching Internships")
-        st.dataframe(display[["title", "Match Score"]].head(5))
+        with colB:
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            st.markdown("### 🧠 AI Career Path")
 
-        st.subheader("Resume Overview")
-        st.write(f"Total Words in Resume: {word_count}")
+            role = top["title"].lower()
+            if any(k in role for k in ["business", "operations", "reporting"]):
+                path = ["Business Intern", "Business Analyst", "Operations Manager"]
+            elif "data" in role:
+                path = ["Data Analyst Intern", "Data Analyst", "Data Scientist"]
+            elif "backend" in role or "python" in role:
+                path = ["Backend Intern", "Backend Engineer", "Software Architect"]
+            elif "frontend" in role or "ui" in role:
+                path = ["Frontend Intern", "Frontend Developer", "UI Lead"]
+            elif "cloud" in role or "devops" in role:
+                path = ["Cloud Intern", "Cloud Engineer", "Cloud Architect"]
+            else:
+                path = ["General Intern", "Specialist", "Team Lead"]
 
-        st.subheader("AI Career Path Suggestion")
+            st.write("Entry Level:", path[0])
+            st.write("Mid Level:", path[1])
+            st.write("Advanced Level:", path[2])
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        role = top_match["title"].lower()
-
-        if any(k in role for k in ["reporting", "business", "operations", "management"]):
-            path = ["Business Intern", "Business Analyst", "Operations Manager"]
-        elif any(k in role for k in ["data", "analyst"]):
-            path = ["Data Analyst Intern", "Data Analyst", "Data Scientist"]
-        elif any(k in role for k in ["backend", "api", "server"]):
-            path = ["Backend Intern", "Backend Engineer", "Software Architect"]
-        elif any(k in role for k in ["frontend", "ui", "web"]):
-            path = ["Frontend Intern", "Frontend Developer", "UI Lead"]
-        elif any(k in role for k in ["cloud", "devops"]):
-            path = ["Cloud Intern", "Cloud Engineer", "Cloud Architect"]
-        else:
-            path = ["General Intern", "Specialist", "Team Lead"]
-
-        st.write("Entry Level:", path[0])
-        st.write("Mid Level:", path[1])
-        st.write("Advanced Level:", path[2])
-
-        st.session_state["results"] = display[["title", "Match Score"]]
-
-    if "results" in st.session_state:
         st.sidebar.download_button(
             "Download Results",
-            st.session_state["results"].to_csv(index=False),
+            display.to_csv(index=False),
             "skillbridge_results.csv",
             "text/csv"
         )
