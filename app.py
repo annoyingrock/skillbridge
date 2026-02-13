@@ -5,30 +5,73 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(page_title="SkillBridge", page_icon="📄", layout="centered")
 
-hide_streamlit_style = """
+st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+
+body {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+
+.login-card {
+    background-color: #111827;
+    padding: 40px;
+    border-radius: 12px;
+    max-width: 420px;
+    margin: auto;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.4);
+}
+
+.login-title {
+    text-align: center;
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.login-subtitle {
+    text-align: center;
+    color: #9ca3af;
+    margin-bottom: 30px;
+}
+
+.login-btn button {
+    width: 100%;
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    color: white;
+    border-radius: 8px;
+    font-size: 16px;
+    padding: 10px;
+}
 </style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+# ---------------- LOGIN PAGE ----------------
 if not st.session_state.logged_in:
 
-    st.title("SkillBridge Login")
+    st.markdown("""
+    <div class="login-card">
+        <div class="login-title">SkillBridge</div>
+        <div class="login-subtitle">Sign in to continue</div>
+    """, unsafe_allow_html=True)
+
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
+    st.markdown('<div class="login-btn">', unsafe_allow_html=True)
     if st.button("Login"):
         if username == "admin" and password == "1234":
             st.session_state.logged_in = True
             st.rerun()
         else:
             st.error("Invalid credentials")
+    st.markdown('</div></div>', unsafe_allow_html=True)
 
+# ---------------- MAIN APP ----------------
 else:
 
     st.title("SkillBridge")
@@ -49,11 +92,7 @@ else:
     if selected_role != "All Internships":
         data = data[data["title"] == selected_role]
 
-    resume_text = st.text_area(
-        "Paste your resume content here",
-        height=200,
-        key="resume"
-    )
+    resume_text = st.text_area("Paste your resume content here", height=200)
 
     if st.button("Find Matches"):
 
@@ -70,23 +109,20 @@ else:
             similarity = cosine_similarity(vectors[-1], vectors[:-1])
             data["Match Score"] = similarity[0] * 100
 
-            results = (
-                data.sort_values(by="Match Score", ascending=False)
-                .reset_index(drop=True)
-            )
+            results = data.sort_values(by="Match Score", ascending=False).reset_index(drop=True)
             results.index = results.index + 1
 
             top_match = results.iloc[0]
 
-            st.success(
-                f"Best Match: {top_match['title']} ({top_match['Match Score']:.2f}%)"
-            )
+            if top_match["Match Score"] < 10:
+                st.warning("No strong internship match found. Try adding more skills or experience.")
+                st.stop()
+
+            st.success(f"Best Match: {top_match['title']} ({top_match['Match Score']:.2f}%)")
             st.progress(int(top_match["Match Score"]))
 
             results_display = results.copy()
-            results_display["Match Score"] = results_display["Match Score"].map(
-                lambda x: f"{x:.2f}%"
-            )
+            results_display["Match Score"] = results_display["Match Score"].map(lambda x: f"{x:.2f}%")
 
             st.subheader("Top Matching Internships")
             st.dataframe(results_display[["title", "Match Score"]].head(5))
@@ -94,21 +130,15 @@ else:
             st.subheader("Resume Overview")
             st.write(f"Total Words in Resume: {len(resume_text.split())}")
 
-            # ---------- AI CAREER PATH GENERATOR ----------
             st.subheader("AI Career Path Suggestion")
 
             role = top_match["title"].lower()
-
-            if "python" in role or "backend" in role:
+            if "business" in role or "operations" in role or "reporting" in role:
+                path = ["Business Analyst", "Operations Manager", "Strategy Lead"]
+            elif "python" in role or "backend" in role:
                 path = ["Backend Developer", "Senior Backend Engineer", "Software Architect"]
             elif "data" in role:
                 path = ["Data Analyst", "Data Scientist", "AI Engineer"]
-            elif "machine learning" in role or "ai" in role:
-                path = ["ML Engineer", "Senior ML Engineer", "AI Researcher"]
-            elif "cloud" in role or "devops" in role:
-                path = ["Cloud Engineer", "DevOps Engineer", "Cloud Architect"]
-            elif "it" in role or "systems" in role:
-                path = ["Systems Engineer", "Infrastructure Lead", "IT Architect"]
             else:
                 path = ["Technical Intern", "Technology Specialist", "Technology Lead"]
 
@@ -120,12 +150,11 @@ else:
 
     if "results" in st.session_state:
         st.sidebar.download_button(
-            label="Download Match Results",
-            data=st.session_state["results"].to_csv(index=False),
-            file_name="skillbridge_results.csv",
-            mime="text/csv"
+            "Download Results",
+            st.session_state["results"].to_csv(index=False),
+            "skillbridge_results.csv",
+            "text/csv"
         )
 
     st.markdown("---")
     st.markdown("SkillBridge © 2026")
-
