@@ -6,7 +6,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 st.set_page_config(page_title="SkillBridge", page_icon="📄")
 
 st.title("SkillBridge - Internship Matcher")
-
 st.write("Enter your resume content to find suitable internships.")
 
 # Load internship data
@@ -24,19 +23,28 @@ if st.button("Find Matches"):
         st.warning("Please enter resume text.")
     else:
 
-        # Prepare text data
+        # Combine descriptions + resume
         descriptions = data["description"].tolist()
         descriptions.append(resume_text)
 
-        # Convert text to numeric form
+        # Convert text to numeric vectors
         vectorizer = TfidfVectorizer()
         vectors = vectorizer.fit_transform(descriptions)
 
         # Calculate similarity
         similarity = cosine_similarity(vectors[-1], vectors[:-1])
 
+        # Convert to percentage
         data["Match Score (%)"] = similarity[0] * 100
-        results = data.sort_values(by="Match Score (%)", ascending=False)
+
+        # Sort and reset index (THIS FIXES NUMBERING)
+        results = (
+            data.sort_values(by="Match Score (%)", ascending=False)
+            .reset_index(drop=True)
+        )
+
+        # Start numbering from 1 instead of 0
+        results.index = results.index + 1
 
         st.subheader("Top Matches")
 
