@@ -130,6 +130,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("")
 st.markdown(
-    "<center><small>© 2026 SkillBridge | Built for Hackathon</small></center>",
+    "<center><small>© 2026 SkillBridge</small></center>",
     unsafe_allow_html=True
 )
+
