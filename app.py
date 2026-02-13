@@ -15,31 +15,30 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 st.title("SkillBridge")
 st.markdown("### Smart Internship Matching Platform")
-st.markdown("Match your resume with internships based on skill similarity.")
+st.markdown("Discover internships that align with your skills.")
 
 st.divider()
 
 try:
     data = pd.read_csv("internships.csv")
 except:
-    st.error("Could not load internship data.")
+    st.error("Unable to load internship data.")
     st.stop()
 
-# -------- SIDEBAR FILTER --------
-st.sidebar.title("Filters")
+st.sidebar.title("Explore Opportunities")
 
 selected_role = st.sidebar.selectbox(
-    "Filter by Role",
-    ["All"] + sorted(data["title"].unique())
+    "Choose Internship Role",
+    ["All Internships"] + sorted(data["title"].unique())
 )
 
-if selected_role != "All":
+if selected_role != "All Internships":
     data = data[data["title"] == selected_role]
 
-# -------- SIDEBAR TOOLS --------
-st.sidebar.subheader("User Tools")
+st.sidebar.markdown("---")
+st.sidebar.title("Resume Actions")
 
-if st.sidebar.button("Clear Resume"):
+if st.sidebar.button("Reset Resume"):
     st.session_state["resume"] = ""
 
 resume_text = st.text_area(
@@ -92,16 +91,13 @@ if st.button("Find Matches"):
 
         st.session_state["results"] = results_display[["title", "Match Score"]]
 
-st.sidebar.subheader("Download Results")
-
 if "results" in st.session_state:
     st.sidebar.download_button(
-        label="Download CSV",
+        label="Download Match Results",
         data=st.session_state["results"].to_csv(index=False),
-        file_name="match_results.csv",
+        file_name="skillbridge_results.csv",
         mime="text/csv"
     )
 
 st.divider()
 st.markdown("SkillBridge © 2026")
-
