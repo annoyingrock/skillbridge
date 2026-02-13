@@ -14,6 +14,13 @@ body {
     background-color: #0f172a;
 }
 
+.login-box {
+    background: linear-gradient(135deg, #1e3a8a, #1e40af);
+    padding: 30px;
+    border-radius: 18px;
+    color: white;
+}
+
 .card {
     background-color: #111827;
     padding: 22px;
@@ -22,16 +29,8 @@ body {
     margin-bottom: 20px;
 }
 
-.highlight {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    padding: 20px;
-    border-radius: 14px;
-    color: white;
-    margin-bottom: 20px;
-}
-
 .small {
-    color: #9ca3af;
+    color: #c7d2fe;
     font-size: 14px;
 }
 </style>
@@ -47,9 +46,11 @@ if not st.session_state.logged_in:
     _, center, _ = st.columns([1,2,1])
 
     with center:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+        # Start blue box
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
+
         st.markdown("## SkillBridge")
-        st.caption("Sign in to continue")
+        st.markdown("<p class='small'>Sign in to continue</p>", unsafe_allow_html=True)
         st.markdown("---")
 
         username = st.text_input("Username")
@@ -62,16 +63,13 @@ if not st.session_state.logged_in:
             else:
                 st.error("Invalid credentials")
 
+        # End blue box
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------- MAIN APP ----------------
 else:
-
-    # 🔴 HEADER INSIDE CARD (this removes blue boxes)
-    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("## SkillBridge")
     st.caption("Smart Internship Matching Platform")
-    st.markdown('</div>', unsafe_allow_html=True)
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
@@ -79,16 +77,6 @@ else:
 
     data = pd.read_csv("internships.csv")
 
-    st.sidebar.title("Explore")
-    selected_role = st.sidebar.selectbox(
-        "Filter by Role",
-        ["All Internships"] + sorted(data["title"].unique())
-    )
-
-    if selected_role != "All Internships":
-        data = data[data["title"] == selected_role]
-
-    # ===== MAIN LAYOUT =====
     left, right = st.columns([3,1])
 
     with left:
@@ -96,72 +84,33 @@ else:
         st.markdown("### 📄 Resume Input")
         resume_text = st.text_area(
             "Paste your resume content here",
-            height=300,
-            placeholder="Education, skills, experience..."
+            height=300
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
     with right:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         run = st.button("🚀 Find Matches", use_container_width=True)
-        st.markdown('<p class="small">Based on skill similarity</p>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     if run:
         if len(resume_text.split()) < 5:
-            st.warning("Please provide more details about your profile.")
+            st.warning("Please provide more details.")
             st.stop()
 
-        descriptions = data["description"].tolist()
-        descriptions.append(resume_text)
+        desc = data["description"].tolist() + [resume_text]
+        vec = TfidfVectorizer(stop_words="english", ngram_range=(1,2))
+        mat = vec.fit_transform(desc)
 
-        vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1,2))
-        vectors = vectorizer.fit_transform(descriptions)
+        scores = cosine_similarity(mat[-1], mat[:-1])[0] * 100
+        data["Match Score"] = scores
 
-        similarity = cosine_similarity(vectors[-1], vectors[:-1])
-        data["Match Score"] = similarity[0] * 100
-
-        if data["Match Score"].max() < 5:
-            st.error("No relevant internship matches found.")
-            st.info("Try adding education, skills, or experience related to internships.")
+        if scores.max() < 5:
+            st.error("No relevant matches found.")
             st.stop()
 
-        results = data.sort_values(by="Match Score", ascending=False).reset_index(drop=True)
-        top = results.iloc[0]
+        best = data.sort_values("Match Score", ascending=False).iloc[0]
 
-        st.markdown('<div class="highlight">', unsafe_allow_html=True)
-        st.markdown("### 🎯 Best Match")
-        st.markdown(f"**{top['title']}**")
-        st.markdown(f"Match Score: **{top['Match Score']:.2f}%**")
-        st.progress(int(top["Match Score"]))
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            display = results.head(5).copy()
-            display["Match Score"] = display["Match Score"].map(lambda x: f"{x:.2f}%")
-            st.dataframe(display[["title", "Match Score"]], use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with col2:
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown("### 🧠 Career Path")
-
-            role = top["title"].lower()
-            if any(k in role for k in ["business", "operations", "reporting"]):
-                path = ["Business Intern", "Business Analyst", "Operations Manager"]
-            elif "data" in role:
-                path = ["Data Analyst Intern", "Data Analyst", "Data Scientist"]
-            elif "backend" in role:
-                path = ["Backend Intern", "Backend Engineer", "Software Architect"]
-            else:
-                path = ["General Intern", "Specialist", "Team Lead"]
-
-            st.write("Entry:", path[0])
-            st.write("Mid:", path[1])
-            st.write("Advanced:", path[2])
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.success(f"Best Match: {best['title']} ({best['Match Score']:.2f}%)")
 
     st.caption("SkillBridge © 2026")
