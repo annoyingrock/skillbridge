@@ -3,21 +3,43 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-st.set_page_config(page_title="SkillBridge", page_icon="📄", layout="centered")
+st.set_page_config(page_title="SkillBridge", page_icon="📄", layout="wide")
 
 hide_streamlit_style = """
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+body {
+    background-color: #f5f7fa;
+}
+.hero {
+    background: linear-gradient(90deg, #4e73df, #1cc88a);
+    padding: 40px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+}
+.card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.title("SkillBridge")
-st.markdown("### Smart Internship Matching Platform")
-st.markdown("Discover internships that align with your skills.")
+# -------- HERO SECTION --------
+st.markdown("""
+<div class="hero">
+    <h1>SkillBridge</h1>
+    <h3>Smart Internship Matching Platform</h3>
+    <p>Match your resume with the right opportunities instantly.</p>
+</div>
+""", unsafe_allow_html=True)
 
-st.divider()
+st.write("")
+st.write("")
 
 try:
     data = pd.read_csv("internships.csv")
@@ -25,6 +47,8 @@ except:
     st.error("Unable to load internship data.")
     st.stop()
 
+# -------- SIDEBAR --------
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=120)
 st.sidebar.title("Explore Opportunities")
 
 selected_role = st.sidebar.selectbox(
@@ -40,6 +64,9 @@ st.sidebar.title("Resume Actions")
 
 if st.sidebar.button("Reset Resume"):
     st.session_state["resume"] = ""
+
+# -------- MAIN CARD --------
+st.markdown('<div class="card">', unsafe_allow_html=True)
 
 resume_text = st.text_area(
     "Paste your resume content here",
@@ -99,5 +126,10 @@ if "results" in st.session_state:
         mime="text/csv"
     )
 
-st.divider()
-st.markdown("SkillBridge © 2026")
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.write("")
+st.markdown(
+    "<center><small>© 2026 SkillBridge | Built for Hackathon</small></center>",
+    unsafe_allow_html=True
+)
